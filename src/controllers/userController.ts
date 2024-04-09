@@ -19,8 +19,8 @@ export const userDetails=async(req:AuthRequest,res:Response)=>{
             email:user.email,
             savedCodes:user.savedCodes
         })
-    }catch(error){
-        return res.status(500).send({message:"failed to fetch user detail"})
+    }catch(error:any){
+        return res.status(500).send({message:"failed to fetch user detail",error:error.message})
 
     }
 
@@ -69,8 +69,8 @@ export const signUp=async(req:AuthRequest,res:Response)=>{
             email:user.email,
             savedCodes:user.savedCodes,
         })
-    }catch(error){
-        return res.status(500).send({message:"Having problem signing!"})
+    }catch(error:any){
+        return res.status(500).send({message:"Having problem signing!",error:error.message})
 
     }
 
@@ -80,7 +80,50 @@ export const signUp=async(req:AuthRequest,res:Response)=>{
  * longin function @login
  */
 
-export const login=async()=>{
+export const login=async(req:AuthRequest,res:Response)=>{
+    const {userId,password}:{userId:string;password:string}=req.body;
+    try{
+        let existingUser=undefined;
+        if(userId.includes("@")){
+            existingUser=await User.findOne({email:userId})
+        }else{
+            existingUser=await User.findOne({username:userId})
+        }
+
+        if(!existingUser){
+            return res.status(400).send({message:"User not found!"})
+        }
+
+        /**
+         * compare password for valid user auth @bcrypt (compare)
+         */
+
+        const comparePass=await bcrypt.compare(password,existingUser.password)
+        if(!comparePass){
+            return res.status(400).send({message:"Password dont match!"})
+        }
+
+        /**assign user token @jwt */
+        const JwtToken=jwt.sign({_id:existingUser._id,email:existingUser.email},
+            process.env.JWT_KEY!,{expiresIn:"2d"})
+
+        res.cookie("token",JwtToken,{
+            path:"/",
+            expires:new Date(Date.now() + 1000 * 60*60*48),
+            httpOnly:true,
+            sameSite:"lax"
+        })
+
+        return res.status(200).send({
+            username:existingUser.username,
+            picture:existingUser.picture,
+            email:existingUser.email,
+            savedCodes:existingUser.savedCodes,
+        })
+    }catch(error:any){
+        return res.status(500).send({message:"Failed to login!",error:error.message})
+
+    }
 
 }
 
@@ -88,6 +131,14 @@ export const login=async()=>{
  * logout function @logout
  */
 
-export const logout=async()=>{
+export const logout=async(req:AuthRequest,res:Response)=>{
+    try{
+        res.clearCookie("token")
+        return res.status(200).send({message:"logged out success!"})
+
+    }catch(error:any){
+        return res.status(500).send({message:"Failed to loggout",error:error.message})
+
+    }
 
 }
