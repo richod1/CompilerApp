@@ -4,6 +4,8 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 import { dbConnect } from "./lib/dbConnect"
 import {config} from "dotenv"
+import { userRouter } from "./routes/UserRoute"
+import { compilerRouter } from "./routes/compilerRouter"
 
 const port:number=3000
 const app=express()
@@ -23,6 +25,11 @@ config();
 app.get('/api',(req:Request,res:Response)=>{
     res.status(200).json({name:"degraft"})
 })
+
+
+// route endpoint
+app.use("/user",userRouter)
+app.use("/compiler",compilerRouter)
 
 app.listen(port,()=>{
     /**
