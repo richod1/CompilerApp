@@ -28,5 +28,5 @@ const CodeSchema=new mongoose.Schema<ICodeSchema>({
 },
 {timestamps:true})
 
-export const Cod=mongoose.model('Code',CodeSchema);
+export const Code=mongoose.model('Code',CodeSchema);
 
